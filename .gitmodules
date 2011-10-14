@@ -1,0 +1,12 @@
+[submodule "vendors/UniversalErrorCatcher"]
+	path = vendors/UniversalErrorCatcher
+	url = git://github.com/formapro/UniversalErrorCatcher.git
+[submodule "vendors/Symfony/Component/HttpFoundation"]
+	path = vendors/Symfony/Component/HttpFoundation
+	url = https://github.com/symfony/HttpFoundation.git
+[submodule "vendors/Symfony/Component/ClassLoader"]
+	path = vendors/Symfony/Component/ClassLoader
+	url = git://github.com/symfony/ClassLoader.git
+[submodule "vendors/Symfony/Component/EventDispatcher"]
+	path = vendors/Symfony/Component/EventDispatcher
+	url = https://github.com/symfony/EventDispatcher.git
