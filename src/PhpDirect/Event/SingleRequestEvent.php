@@ -12,13 +12,14 @@ class SingleRequestEvent extends Event
 {
     protected $request;
 
-    protected $service;
+    protected $callback;
 
-    protected $method;
+    protected $arguments;
 
     public function __construct(Request $request)
     {
-        $this->request;
+        $this->request = $request;
+        $this->arguments = array();
     }
 
     public function getSingleRequest()
@@ -26,23 +27,23 @@ class SingleRequestEvent extends Event
         return $this->request;
     }
 
-    public function setService(ServiceDefinition $service)
+    public function setServiceCallback($callback)
     {
-        $this->service = $service;
+        $this->callback = $callback;
     }
 
-    public function getService()
+    public function getServiceCallback()
     {
-        return $this->service;
+        return $this->callback;
     }
 
-    public function setMethod(MethodDefinition $method)
+    public function setArguments(array $arguments)
     {
-        $this->method = $method;
+        $this->arguments = $arguments;
     }
 
-    public function getMethod()
+    public function getArguments()
     {
-        return $this->method;
+        return $this->arguments;
     }
 }

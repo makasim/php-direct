@@ -9,6 +9,7 @@ use PhpDirect\Event\Events;
 use PhpDirect\Event\MasterRequestEvent;
 use PhpDirect\Event\BatchRequestEvent;
 use PhpDirect\Event\SingleRequestEvent;
+use PhpDirect\Response\Response;
 
 class Server
 {
@@ -60,19 +61,20 @@ class Server
             return $response;
         }
 
-        foreach ($batchRequest as $request) {
-
-            $event = new SingleRequestEvent($request);
+        foreach ($batchRequest as $singleRequest) {
+            $event = new SingleRequestEvent($singleRequest);
             $this->eventDispatcher->dispatch(Events::SINGLE_REQUEST, $event);
 
-            $service = $event->getService();
-            $method = $event->getMethod();
-            if (false == ($service && $method)) {
-                throw new \LogicException(sprintf('The service and\or method weren\'t found for the request: %s', $request));
+            $serviceCallback = $event->getServiceCallback();
+            if (false == $serviceCallback) {
+                throw new \LogicException(sprintf(
+                    'The service cannot be found for action %s and method %s',
+                    $request->attribute->get('action', 'undefined'),
+                    $request->attribute->get('method', 'undefined')
+                ));
             }
 
-
-
+            $singleResponse = call_user_func_array($serviceCallback, $event->getArguments());
         }
 
         return new Response($result);

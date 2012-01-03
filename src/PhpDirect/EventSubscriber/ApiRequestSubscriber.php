@@ -27,7 +27,7 @@ class ApiRequestSubscriber implements EventSubscriberInterface
         $request = $event->getMasterRequest();
 
         if ('GET' == $request->getMethod() && 'api' == $request->query->get('ext')) {
-            $event->setResponse($this->getApiResponse($request->getUriForPath('')));
+            $event->setResponse($this->getApiResponse($request->getUriForPath($request->getPathInfo())));
             $event->stopPropagation();
         }
     }
@@ -35,13 +35,16 @@ class ApiRequestSubscriber implements EventSubscriberInterface
     public function generateApi($endpointUrl)
     {
         $actions = array();
-        foreach ($this->serviceManager->all() as $service) {
-            $methods = array();
-            foreach ($service->getMethods() as $method) {
-                $methods[] = array('name' => $method->getAlias(), 'len' => 1);
+        foreach ($this->serviceManager->all() as $serviceName => $methodsDefinitions) {
+            foreach ($methodsDefinitions as $methodName => $callback) {
+                $methodDef = new \stdClass();
+                $methodDef->name = $methodName;
+                $methodDef->len = 1;
+
+                $methods[] = $methodDef;
             }
 
-            $actions[$service->getAlias()] = $methods;
+            $actions[$serviceName] = $methods;
         }
 
         return array(
@@ -54,8 +57,8 @@ class ApiRequestSubscriber implements EventSubscriberInterface
 
     public function getApiResponse($endpointUrl)
     {
-        $api = 'Ext.ns("'.$this->namespace.'")';
-        $api = $this->namespace . 'REMOTING_API = ' . json_encode($this->generateApi($endpointUrl));
+        $remotingApi = json_encode($this->generateApi($endpointUrl));
+        $api = "Ext.ns('{$this->namespace}'); {$this->namespace}.REMOTING_API = {$remotingApi}";
 
         return new Response($api, 200, array('Content-Type' => 'text/javascript'));
     }
@@ -65,4 +68,3 @@ class ApiRequestSubscriber implements EventSubscriberInterface
         return array(Events::MASTER_REQUEST => 'onMasterRequest');
     }
 }
- 
