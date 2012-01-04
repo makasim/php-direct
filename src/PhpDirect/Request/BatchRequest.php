@@ -1,34 +1,34 @@
 <?php
 namespace PhpDirect\Request;
 
-use Symfony\Component\HttpFoundation\Request;
-
 class BatchRequest implements \IteratorAggregate, \Countable
 {
-    protected $requests = array();
+    protected $singleRequests = array();
+
+    public function add(SingleRequest $request)
+    {
+        $this->singleRequests[] = $request;
+    }
 
     public function first()
     {
-        return $this->requests[0];
-    }
+        $singleRequests = $this->singleRequests;
 
-    public function add(Request $request)
-    {
-        $this->requests[] = $request;
+        return array_shift($singleRequests);
     }
 
     public function all()
     {
-        return $this->requests;
+        return $this->singleRequests;
     }
 
     public function getIterator()
     {
-        return new \ArrayIterator($this->requests);
+        return new \ArrayIterator($this->singleRequests);
     }
 
     public function count()
     {
-        return count($this->requests);
+        return count($this->singleRequests);
     }
 }

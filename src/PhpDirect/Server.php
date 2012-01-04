@@ -51,37 +51,40 @@ class Server
             return $response;
         }
         if (false == $batchRequest = $event->getBatchRequest()) {
-            throw new \LogicException('Master request should be parsed to a BatchRequest, Didn\'t you  forget subscribe RequestParser?');
+            throw new \LogicException('Master request should be parsed to a BatchRequest, Didn\'t you  forget subscribe MasterRequestParserSubscriber?');
         }
 
         $event = new BatchRequestEvent($batchRequest);
         $this->eventDispatcher->dispatch(Events::BATCH_REQUEST, $event);
 
-        if ($response = $event->getResponse()) {
-            return $response;
-        }
-
+        $responseContent = array();
         foreach ($batchRequest as $singleRequest) {
             $event = new SingleRequestEvent($singleRequest);
             $this->eventDispatcher->dispatch(Events::SINGLE_REQUEST, $event);
 
-            $serviceCallback = $event->getServiceCallback();
-            if (false == $serviceCallback) {
+            $callback = $event->getCallback();
+            if (false == $callback) {
                 throw new \LogicException(sprintf(
                     'The service cannot be found for action %s and method %s',
-                    $request->attribute->get('action', 'undefined'),
-                    $request->attribute->get('method', 'undefined')
+                    $singleRequest->attribute->get('action', 'undefined'),
+                    $singleRequest->attribute->get('method', 'undefined')
                 ));
             }
 
-            $singleResponse = call_user_func_array($serviceCallback, $event->getArguments());
+            $content = new \stdClass();
+            $content->type = $singleRequest->metadata->get('type');
+            $content->tid = $singleRequest->metadata->get('tid');
+            $content->action = $singleRequest->metadata->get('action');
+            $content->method = $singleRequest->metadata->get('method');;
+            $content->result = call_user_func_array($callback, $event->getArguments());
+
+            $responseContent[] = $content;
         }
 
-        return new Response($result);
-    }
+        if (1 == count($responseContent)) {
+            $responseContent = array_shift($responseContent);
+        }
 
-    public function sendMasterRequestEvent(Request $masterRequest)
-    {
-
+        return new Response($responseContent);
     }
 }

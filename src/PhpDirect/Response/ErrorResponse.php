@@ -7,12 +7,11 @@ class ErrorResponse extends Response
 {
     public function __construct($message, $where = '', $type = '')
     {
-        $content = json_encode(array(
-            'type' => $where,
-            'message' => $message,
-            'where' => $where,
-        ));
+        $content = new \stdClass();
+        $content->type = 'exception';
+        $content->message = $message;
+        $content->where = $where;
 
-        parent::__construct($content, 500, array('Content-Type' => 'text/javascript'));
+        parent::__construct(json_encode($content), 500, array('Content-Type' => 'text/javascript'));
     }
 }

@@ -11,10 +11,13 @@ class EchoRequestSubscriber implements EventSubscriberInterface
 {
     public function onMasterRequest(MasterRequestEvent $event)
     {
+        if ($event->getResponse() || $event->getBatchRequest()) {
+            return;
+        }
+
         $request = $event->getMasterRequest();
         if ('GET' == $request->getMethod() && 'echo' == $request->query->get('ext')) {
             $event->setResponse($this->getEchoResponse());
-            $event->stopPropagation();
         }
     }
 

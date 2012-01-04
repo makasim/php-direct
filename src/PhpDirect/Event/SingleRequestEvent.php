@@ -3,36 +3,37 @@
 namespace PhpDirect\Event;
 
 use Symfony\Component\EventDispatcher\Event;
-use Symfony\Component\HttpFoundation\Request;
 
 use PhpDirect\Service\Definition\ServiceDefinition;
 use PhpDirect\Service\Definition\MethodDefinition;
+use PhpDirect\Request\SingleRequest;
 
 class SingleRequestEvent extends Event
 {
-    protected $request;
+    protected $singleRequest;
 
     protected $callback;
 
     protected $arguments;
 
-    public function __construct(Request $request)
+    public function __construct(SingleRequest $request)
     {
-        $this->request = $request;
+        $this->singleRequest = $request;
         $this->arguments = array();
+        $this->callback = null;
     }
 
     public function getSingleRequest()
     {
-        return $this->request;
+        return $this->singleRequest;
     }
 
-    public function setServiceCallback($callback)
+    public function setCallback($callback)
     {
         $this->callback = $callback;
     }
 
-    public function getServiceCallback()
+    public function getCallback()
     {
         return $this->callback;
     }

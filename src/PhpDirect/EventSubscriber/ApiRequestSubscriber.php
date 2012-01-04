@@ -7,7 +7,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 use PhpDirect\Event\Events;
 use PhpDirect\Event\MasterRequestEvent;
-
 use PhpDirect\Service\ServiceManager;
 
 class ApiRequestSubscriber implements EventSubscriberInterface
@@ -24,11 +23,14 @@ class ApiRequestSubscriber implements EventSubscriberInterface
 
     public function onMasterRequest(MasterRequestEvent $event)
     {
+        if ($event->getResponse() || $event->getBatchRequest()) {
+            return;
+        }
+
         $request = $event->getMasterRequest();
 
         if ('GET' == $request->getMethod() && 'api' == $request->query->get('ext')) {
             $event->setResponse($this->getApiResponse($request->getUriForPath($request->getPathInfo())));
-            $event->stopPropagation();
         }
     }
 
@@ -39,7 +41,22 @@ class ApiRequestSubscriber implements EventSubscriberInterface
             foreach ($methodsDefinitions as $methodName => $callback) {
                 $methodDef = new \stdClass();
                 $methodDef->name = $methodName;
-                $methodDef->len = 1;
+
+                $methodDef->len = 0;
+                foreach ($this->serviceManager->getParameters($serviceName, $methodName) as $parameterReflection) {
+                    $isSingleRequest =
+                        $parameterReflection->getClass() &&
+                        $parameterReflection->getClass()->getName() == 'PhpDirect\Request\SingleRequest'
+                    ;
+                    if ($isSingleRequest) continue;
+
+                    $methodDef->len++;
+                }
+
+
+                if ($this->serviceManager->isFormHandler($serviceName, $methodName)) {
+                    $methodDef->formHandler = true;
+                }
 
                 $methods[] = $methodDef;
             }
