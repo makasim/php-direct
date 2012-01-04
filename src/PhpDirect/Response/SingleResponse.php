@@ -5,20 +5,27 @@ use Symfony\Component\HttpFoundation\Response as BaseResponse;
 
 class SingleResponse extends BaseResponse
 {
-    public function __construct($rawContent, $tid, $action, $method, $type)
-    {
-        $content = new \stdClass();
-        $content->type = $type;
-        $content->action = $action;
-        $content->method = $method;
-        $content->type = $type;
-        $content->result = $rawContent;
+    protected $rawContent;
 
-        parent::__construct($content, 200, array('Content-Type' => 'text/javascript'));
+    public function __construct($result, $tid, $action, $method, $type)
+    {
+        $this->rawContent = new \stdClass();
+
+        $this->rawContent->result = $result;
+        $this->rawContent->tid = $tid;
+        $this->rawContent->action = $action;
+        $this->rawContent->method = $method;
+        $this->rawContent->type = $type;
+
+        parent::__construct(
+            json_encode($this->rawContent),
+            200,
+            array('Content-Type' => 'text/javascript')
+        );
     }
 
-    public function sendContent()
+    public function getRawContent()
     {
-        echo json_encode($this->getContent());
+        return $this->rawContent;
     }
 }

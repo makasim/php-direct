@@ -9,7 +9,10 @@ use PhpDirect\Event\Events;
 use PhpDirect\Event\MasterRequestEvent;
 use PhpDirect\Event\BatchRequestEvent;
 use PhpDirect\Event\SingleRequestEvent;
-use PhpDirect\Response\Response;
+use PhpDirect\Event\SingleResponseEvent;
+use PhpDirect\Event\BatchResponseEvent;
+use PhpDirect\Event\ExceptionThrownEvent;
+use PhpDirect\Response\BatchResponse;
 
 class Server
 {
@@ -19,10 +22,9 @@ class Server
 
     protected $errorCather;
 
-    public function __construct(EventDispatcher $eventDispatcher, ErrorCatcher $errorCatcher)
+    public function __construct(EventDispatcher $eventDispatcher)
     {
         $this->eventDispatcher = $eventDispatcher;
-        $this->errorCatcher = $errorCatcher;
     }
 
     /**
@@ -32,15 +34,18 @@ class Server
      */
     public function handle(Request $masterRequest)
     {
-//        $this->errorCatcher->start();
-//
-//        try {
+        try {
             return $this->handleRaw($masterRequest);
-//        } catch (\Exception $e) {
-//            return $this->errorCatcher->handleException($e);
-//        }
-//
-//        $this->errorCatcher->stop();
+        } catch (\Exception $e) {
+            $event = new ExceptionThrownEvent($e);
+            $this->eventDispatcher->dispatch(Events::EXCEPTION_THROW, $event);
+
+            if ($event->getErrorResponse()) {
+                return $event->getErrorResponse();
+            }
+
+            throw $e;
+        }
     }
 
     protected function handleRaw(Request $masterRequest)
@@ -57,7 +62,7 @@ class Server
         $event = new BatchRequestEvent($batchRequest);
         $this->eventDispatcher->dispatch(Events::BATCH_REQUEST, $event);
 
-        $responseContent = array();
+        $singleResponses = array();
         foreach ($batchRequest as $singleRequest) {
             $event = new SingleRequestEvent($singleRequest);
             $this->eventDispatcher->dispatch(Events::SINGLE_REQUEST, $event);
@@ -66,25 +71,31 @@ class Server
             if (false == $callback) {
                 throw new \LogicException(sprintf(
                     'The service cannot be found for action %s and method %s',
-                    $singleRequest->attribute->get('action', 'undefined'),
-                    $singleRequest->attribute->get('method', 'undefined')
+                    $singleRequest->metadata->get('action', 'undefined'),
+                    $singleRequest->metadata->get('method', 'undefined')
                 ));
             }
 
-            $content = new \stdClass();
-            $content->type = $singleRequest->metadata->get('type');
-            $content->tid = $singleRequest->metadata->get('tid');
-            $content->action = $singleRequest->metadata->get('action');
-            $content->method = $singleRequest->metadata->get('method');;
-            $content->result = call_user_func_array($callback, $event->getArguments());
+            $rawResult = call_user_func_array($callback, $event->getArguments());
 
-            $responseContent[] = $content;
+            $event = new SingleResponseEvent($singleRequest, $rawResult);
+            $this->eventDispatcher->dispatch(Events::SINGLE_RESPONSE, $event);
+
+            $singleResponse = $event->getSingleResponse();
+            if (false == $event->getSingleResponse()) {
+                throw new \LogicException(sprintf(
+                    'The raw result should be wrapped into SingleResponse, Didn\'t you forget subscribe SingleResponseWrapperSubscriber?'
+                ));
+            }
+
+            $singleResponses[] = $singleResponse;
         }
 
-        if (1 == count($responseContent)) {
-            $responseContent = array_shift($responseContent);
-        }
+        $batchResponse = new BatchResponse($singleResponses);
 
-        return new Response($responseContent);
+        $event = new BatchResponseEvent($batchResponse);
+        $this->eventDispatcher->dispatch(Events::BATCH_RESPONSE, $event);
+
+        return $batchResponse;
     }
 }

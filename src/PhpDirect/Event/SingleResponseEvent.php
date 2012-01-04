@@ -3,20 +3,23 @@
 namespace PhpDirect\Event;
 
 use Symfony\Component\EventDispatcher\Event;
-use Symfony\Component\HttpFoundation\Request;
 
 use PhpDirect\Response\Response;
+use PhpDirect\Request\SingleRequest;
+use PhpDirect\Response\SingleResponse;
 
 class SingleResponseEvent extends Event
 {
     protected $singleRequest;
 
-    protected $rawResponse;
+    protected $rawResult;
 
-    public function __construct(Request $singleRequest, $rawResponse)
+    protected $singleResponse;
+
+    public function __construct(SingleRequest $singleRequest, $rawResult)
     {
         $this->singleRequest = $singleRequest;
-        $this->rawResponse = $rawResponse;
+        $this->rawResult = $rawResult;
     }
 
     public function getSingleRequest()
@@ -24,14 +27,18 @@ class SingleResponseEvent extends Event
         return $this->singleRequest;
     }
 
-    public function getRawResponse()
+    public function getRawResult()
     {
-        return $this->rawResponse;
+        return $this->rawResult;
     }
 
-    public function setResponse()
+    public function setSingleResponse(SingleResponse $singleResponse)
     {
+        $this->singleResponse = $singleResponse;
+    }
 
+    public function getSingleResponse()
+    {
+        return $this->singleResponse;
     }
 }
- 
