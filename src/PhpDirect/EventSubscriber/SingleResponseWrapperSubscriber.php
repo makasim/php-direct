@@ -5,7 +5,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use PhpDirect\Event\Events;
 use PhpDirect\Event\SingleResponseEvent;
-use PhpDirect\Response\SingleResponse;
 
 class SingleResponseWrapperSubscriber implements EventSubscriberInterface
 {
@@ -17,12 +16,18 @@ class SingleResponseWrapperSubscriber implements EventSubscriberInterface
 
         $singleRequest = $event->getSingleRequest();
 
-        $event->setSingleResponse(new SingleResponse(
+        $responseClass = $singleRequest->metadata->get('upload', false) ?
+            'PhpDirect\Response\SingleUploadResponse' :
+            'PhpDirect\Response\SingleResponse'
+        ;
+
+        $event->setSingleResponse(new $responseClass(
             $event->getRawResult(),
             $singleRequest->metadata->get('tid'),
             $singleRequest->metadata->get('action'),
             $singleRequest->metadata->get('method'),
             $singleRequest->metadata->get('type')
+
         ));
     }
 

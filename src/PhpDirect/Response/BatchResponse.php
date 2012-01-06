@@ -3,7 +3,7 @@ namespace PhpDirect\Response;
 
 use Symfony\Component\HttpFoundation\Response as BaseResponse;
 
-class BatchResponse extends BaseResponse
+class BatchResponse extends BaseResponse implements \Countable
 {
     protected $rawContent;
 
@@ -13,14 +13,9 @@ class BatchResponse extends BaseResponse
     {
         $this->singleResponses = $singleResponses;
 
-        if (1 === count($singleResponses)) {
-            $firstSingleResponse = array_shift($singleResponses);
-            $this->rawContent = $firstSingleResponse->getRawContent();
-        } else {
-            $this->rawContent = array();
-            foreach ($singleResponses as $singleResponse) {
-                $this->rawContent[] = $singleResponse->getRawContent();
-            }
+        $this->rawContent = array();
+        foreach ($this->singleResponses as $singleResponse) {
+            $this->rawContent[] = $singleResponse->getRawContent();
         }
 
         parent::__construct(
@@ -35,6 +30,11 @@ class BatchResponse extends BaseResponse
         $singleResponses = $this->singleResponses;
 
         return array_shift($singleResponses);
+    }
+
+    public function count()
+    {
+        return count($this->singleResponses);
     }
 
     public function getRawContent()

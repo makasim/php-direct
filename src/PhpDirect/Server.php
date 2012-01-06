@@ -96,6 +96,6 @@ class Server
         $event = new BatchResponseEvent($batchResponse);
         $this->eventDispatcher->dispatch(Events::BATCH_RESPONSE, $event);
 
-        return $batchResponse;
+        return 1 == count($batchResponse) ? $batchResponse->first() : $batchResponse;
     }
 }
