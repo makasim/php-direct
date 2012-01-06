@@ -73,8 +73,15 @@ class MasterRequestParserSubscriber implements EventSubscriberInterface
 
     protected function parseFormPost(Request $masterRequest)
     {
-        $isValid = 'POST' == $masterRequest->getMethod() && $masterRequest->get('extAction') && $masterRequest->get('extMethod');
-        if (false == $isValid) {
+        if ('POST' != $masterRequest->getMethod()) {
+            return;
+        }
+        if (false == ($masterRequest->get('extAction') && $masterRequest->get('extMethod'))) {
+            return;
+        }
+
+        $request = array($masterRequest->request->all());
+        if (false == isset($request[0])) {
             return;
         }
 
@@ -86,7 +93,6 @@ class MasterRequestParserSubscriber implements EventSubscriberInterface
             'method' => $masterRequest->get('extMethod'),
         );
 
-        $request = array($masterRequest->request->all());
         unset(
             $request[0]['extTID'],
             $request[0]['extType'],
@@ -94,6 +100,12 @@ class MasterRequestParserSubscriber implements EventSubscriberInterface
             $request[0]['extAction'],
             $request[0]['extMethod']
         );
+
+        $request[0] = array_merge(
+            $request[0],
+            array_filter($masterRequest->files->all())
+        );
+
         $request[0] = (object) $request[0];
 
         $singleRequest = new SingleRequest($masterRequest, $metadata, $request);
