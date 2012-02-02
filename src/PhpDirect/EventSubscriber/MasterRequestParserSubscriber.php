@@ -63,7 +63,10 @@ class MasterRequestParserSubscriber implements EventSubscriberInterface
                 'method' => $singleRawRequest->method,
             );
 
-            $request = array_values($singleRawRequest->data);
+            $request = is_array($singleRawRequest->data) ?
+                array_values($singleRawRequest->data) :
+                array();
+            ;
 
             $batchRequest->add(new SingleRequest($masterRequest, $metadata, $request));
         }

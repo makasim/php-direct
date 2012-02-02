@@ -82,6 +82,8 @@ class ApiRequestSubscriber implements EventSubscriberInterface
 
     public static function getSubscribedEvents()
     {
-        return array(Events::MASTER_REQUEST => 'onMasterRequest');
+        return array(
+            Events::MASTER_REQUEST => array('onMasterRequest', 255)
+        );
     }
 }

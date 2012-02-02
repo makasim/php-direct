@@ -41,13 +41,9 @@ class ServiceManager
         return $this->services[$service][$method];
     }
 
-    public function setFormHandler($service, $method, $boolean = true)
+    public function markFormHandler($service, $method)
     {
-        if ($boolean) {
-            $this->form_handlers[$service][$method] = $boolean;
-        } else {
-            unset($this->form_handlers[$service][$method]);
-        }
+        $this->form_handlers[$service][$method]= true;
     }
 
     public function isFormHandler($service, $method)
