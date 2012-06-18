@@ -123,6 +123,6 @@ class MasterRequestParserSubscriber implements EventSubscriberInterface
     {
         $lowPriority = -255;
 
-        return array(Events::MASTER_REQUEST => 'onMasterRequest', $lowPriority);
+        return array(Events::MASTER_REQUEST => array('onMasterRequest', $lowPriority));
     }
 }
